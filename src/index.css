@@ -1,0 +1,70 @@
+@font-face {
+  font-family: Galmuri14;
+  font-weight: 400;
+  font-display: swap;
+  src: url('galmuri/dist/Galmuri14.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: GalmuriMono11;
+  font-weight: 400;
+  font-display: swap;
+  src: url('galmuri/dist/GalmuriMono11.woff2') format('woff2');
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  --desk: #232d52;
+  --desk-dot: #2e3a66;
+  --face: #d8d6e6;
+  --paper: #fbfaf6;
+  --ink: #17172e;
+  --ink-soft: #55557a;
+  --pink: #ff5c9a;
+  --cyan: #4fd1d9;
+  --yellow: #ffe14d;
+  --danger: #d6264f;
+  --ok: #1f8f55;
+}
+
+body {
+  font-family: Galmuri14, 'Malgun Gothic', ui-monospace, monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  background-color: var(--desk);
+  background-image: radial-gradient(var(--desk-dot) 1px, transparent 1px);
+  background-size: 4px 4px;
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--yellow);
+}
