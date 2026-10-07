@@ -32,8 +32,8 @@
 - Double Defense: render 호출 누락은 프롬프트(`server/index.ts:12`)와 `ensureRenderCall`(`server/generator.ts:238`) 두 곳에서 막는다. 둘 중 하나를 제거하지 않는다.
 - Asymmetry: Gemini만 모델 폴백(`GOOGLE_MODELS`, `withModelFallback`)과 `MAX_TOKENS` 잘림 검사를 가진다 (`server/index.ts:5`, `:123`, `:135`). Anthropic 경로는 단일 모델이며 `max_tokens: 4096`이다 (`server/index.ts:78`). 폴백 정책을 바꿀 때 두 경로의 차이를 의도로 간주하고 임의로 통일하지 않는다.
 - Asymmetry: 에러 메시지의 상태코드 문자열(`'503'`, `'429'`)로 HTTP 상태를 매핑한다 (`server/index.ts:194-206`). 프로바이더 에러 포맷(`Claude API error: ${status}`, `Gemini API error: ${status}`)을 바꾸면 이 매핑이 깨진다.
-- Test Boundary: 테스트는 순수 로직(`server/generator.ts`, `server/fallback.ts`)과 `src/components/PromptInput.tsx`에만 있다. `server/index.ts`(Bun.serve, 외부 API 호출), `src/hooks/useComponentGenerator.ts`, `LivePreview.tsx`는 테스트가 없으므로 로직을 추가할 때 순수 함수로 분리해 테스트 가능한 쪽으로 옮긴다.
-- Security Boundary: 사용자가 UI에 입력한 `apiKey`는 요청 본문으로만 서버에 전달되며 (`src/hooks/useComponentGenerator.ts:26`) 서버 키보다 우선한다 (`server/index.ts:65`). 저장소(localStorage 등)에 영속화하거나 로그에 출력하지 않는다. Gemini URL은 키를 쿼리스트링에 포함하므로 (`server/index.ts:99`) 해당 URL을 로그/에러 메시지에 노출하지 않는다.
+- Test Boundary: 테스트는 순수 로직(`server/generator.ts`, `server/fallback.ts`, `src/utils/*.ts`)과 `src/components/PromptInput.tsx`에만 있다. `server/index.ts`(Bun.serve, 외부 API 호출), `src/hooks/useComponentGenerator.ts`, `LivePreview.tsx`는 테스트가 없으므로 로직을 추가할 때 순수 함수로 분리해 테스트 가능한 쪽으로 옮긴다.
+- Security Boundary: 사용자가 UI에 입력한 `apiKey`는 요청 본문으로만 서버에 전달되며 (`src/hooks/useComponentGenerator.ts:26`) 서버 키보다 우선한다 (`server/index.ts:65`). 새로고침 후에도 유지되도록 `localStorage`(`rcg:apiKey`)에만 저장한다 (`src/utils/storage.ts`, `src/App.tsx`). 평문 저장이라 같은 브라우저의 스크립트(XSS)로 읽힐 수 있음을 전제로, 다른 저장소(cookie, sessionStorage, 서버)로 옮기거나 로그·에러 메시지·서버 응답에 출력하지 않는다. localStorage 접근은 `src/utils/storage.ts`의 `readJSON`/`writeJSON`으로만 하고, 키 이름은 `STORAGE_KEYS`에 모은다. 이 앱이 영속화하는 상태는 API 키, Provider, 프롬프트 히스토리(최대 20개), 생성된 컴포넌트 목록이다. Gemini URL은 키를 쿼리스트링에 포함하므로 (`server/index.ts:99`) 해당 URL을 로그/에러 메시지에 노출하지 않는다.
 
 ## Project Context
 

@@ -1,21 +1,27 @@
 import { useState, useCallback } from 'react';
 import type { GeneratedComponent, Provider } from '../types';
+import { STORAGE_KEYS, parseComponents, writeTrimmedList } from '../utils/storage';
+import { usePersistedState } from './usePersistedState';
 
 interface UseComponentGeneratorReturn {
   components: GeneratedComponent[];
   isLoading: boolean;
   error: string | null;
-  generate: (prompt: string, apiKey: string | undefined, provider: Provider) => Promise<void>;
+  generate: (prompt: string, apiKey: string | undefined, provider: Provider) => Promise<boolean>;
   removeComponent: (id: string) => void;
   clearAll: () => void;
 }
 
 export function useComponentGenerator(): UseComponentGeneratorReturn {
-  const [components, setComponents] = useState<GeneratedComponent[]>([]);
+  const [components, setComponents] = usePersistedState<GeneratedComponent[]>(
+    STORAGE_KEYS.components,
+    parseComponents,
+    writeTrimmedList,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = useCallback(async (prompt: string, apiKey: string | undefined, provider: Provider) => {
+  const generate = useCallback(async (prompt: string, apiKey: string | undefined, provider: Provider): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
@@ -40,21 +46,23 @@ export function useComponentGenerator(): UseComponentGeneratorReturn {
       };
 
       setComponents((prev) => [newComponent, ...prev]);
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
+      return false;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setComponents]);
 
   const removeComponent = useCallback((id: string) => {
     setComponents((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  }, [setComponents]);
 
   const clearAll = useCallback(() => {
     setComponents([]);
-  }, []);
+  }, [setComponents]);
 
   return { components, isLoading, error, generate, removeComponent, clearAll };
 }
