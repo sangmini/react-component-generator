@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { PromptInput } from './components/PromptInput';
 import { ComponentCard } from './components/ComponentCard';
 import { useComponentGenerator } from './hooks/useComponentGenerator';
+import { usePersistedState } from './hooks/usePersistedState';
+import {
+  STORAGE_KEYS,
+  addPromptToHistory,
+  parseApiKey,
+  parseHistory,
+  parseProvider,
+} from './utils/storage';
 import type { Provider } from './types';
 import './App.css';
 
@@ -11,9 +19,13 @@ const PROVIDER_CONFIG = {
 } as const;
 
 function App() {
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = usePersistedState(STORAGE_KEYS.apiKey, parseApiKey);
   const [showKey, setShowKey] = useState(false);
-  const [provider, setProvider] = useState<Provider>('google');
+  const [provider, setProvider] = usePersistedState<Provider>(
+    STORAGE_KEYS.provider,
+    parseProvider,
+  );
+  const [history, setHistory] = usePersistedState(STORAGE_KEYS.history, parseHistory);
   const [envKeys, setEnvKeys] = useState<Record<Provider, boolean>>({
     anthropic: false,
     google: false,
@@ -35,6 +47,7 @@ function App() {
       alert(`${PROVIDER_CONFIG[provider].label} API 키를 입력하거나 .env에 설정해주세요.`);
       return;
     }
+    setHistory((prev) => addPromptToHistory(prev, prompt));
     generate(prompt, apiKey || undefined, provider);
   };
 
@@ -73,7 +86,7 @@ function App() {
             <h2 id="composer-title">새 컴포넌트</h2>
           </div>
           <div className="win-body">
-            <PromptInput onGenerate={handleGenerate} isLoading={isLoading} />
+            <PromptInput onGenerate={handleGenerate} isLoading={isLoading} history={history} />
           </div>
         </section>
 
