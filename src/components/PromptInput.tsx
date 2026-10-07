@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { validatePromptLength, MAX_PROMPT_LENGTH } from '../utils/validatePrompt';
 
 interface PromptInputProps {
   onGenerate: (prompt: string) => void;
@@ -17,9 +18,11 @@ const EXAMPLES = [
 export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
   const [prompt, setPrompt] = useState('');
 
+  const { valid, length } = validatePromptLength(prompt);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim() && !isLoading) {
+    if (prompt.trim() && valid && !isLoading) {
       onGenerate(prompt.trim());
     }
   };
@@ -47,7 +50,7 @@ export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
         <button
           type="submit"
           className="btn-generate"
-          disabled={!prompt.trim() || isLoading}
+          disabled={!prompt.trim() || !valid || isLoading}
         >
           {isLoading ? (
             <span className="loading-spinner">생성 중...</span>
@@ -56,6 +59,16 @@ export function PromptInput({ onGenerate, isLoading }: PromptInputProps) {
           )}
         </button>
       </form>
+      <div className="prompt-meta">
+        {!valid && (
+          <p role="alert" className="prompt-length-error">
+            프롬프트는 {MAX_PROMPT_LENGTH}자까지 입력할 수 있습니다.
+          </p>
+        )}
+        <span className={`prompt-counter${valid ? '' : ' prompt-counter-over'}`}>
+          {length}/{MAX_PROMPT_LENGTH}
+        </span>
+      </div>
       <div className="prompt-examples">
         <span className="examples-label">예시 프롬프트</span>
         {EXAMPLES.map((example) => (

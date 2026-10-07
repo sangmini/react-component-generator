@@ -289,6 +289,25 @@
   color: #8a8aa8;
 }
 
+.prompt-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.prompt-length-error {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.prompt-counter-over {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .prompt-examples {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
