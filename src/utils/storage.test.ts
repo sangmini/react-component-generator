@@ -8,6 +8,7 @@ import {
   parseProvider,
   readJSON,
   writeJSON,
+  writeTrimmedList,
 } from './storage';
 
 beforeEach(() => {
@@ -35,6 +36,48 @@ describe('readJSON / writeJSON', () => {
       throw new DOMException('quota', 'QuotaExceededError');
     });
     expect(() => writeJSON('k', 'v')).not.toThrow();
+  });
+
+  it('저장에 성공하면 true를 반환한다', () => {
+    expect(writeJSON('k', 'v')).toBe(true);
+  });
+
+  it('저장에 실패하면 false를 반환한다', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+    expect(writeJSON('k', 'v')).toBe(false);
+  });
+});
+
+describe('writeTrimmedList', () => {
+  const failWhenLongerThan = (limit: number) => {
+    const original = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (value.length > limit) throw new DOMException('quota', 'QuotaExceededError');
+      original.call(this, key, value);
+    });
+  };
+
+  it('모두 들어가면 목록 전체를 저장한다', () => {
+    writeTrimmedList('k', ['a', 'b', 'c']);
+    expect(readJSON('k')).toEqual(['a', 'b', 'c']);
+  });
+
+  it('용량이 부족하면 오래된(뒤쪽) 항목부터 버리고 최신 항목을 저장한다', () => {
+    // '["a","b"]'는 9자, '["a","b","c"]'는 13자
+    failWhenLongerThan(9);
+    writeTrimmedList('k', ['a', 'b', 'c']);
+    expect(readJSON('k')).toEqual(['a', 'b']);
+  });
+
+  it('하나도 저장할 수 없으면 예외 없이 끝낸다', () => {
+    failWhenLongerThan(0);
+    expect(() => writeTrimmedList('k', ['a', 'b'])).not.toThrow();
   });
 });
 
@@ -73,6 +116,15 @@ describe('parseHistory', () => {
 
   it('문자열이 아닌 항목은 제외한다', () => {
     expect(parseHistory(['a', 1, null, 'b'])).toEqual(['a', 'b']);
+  });
+
+  it('중복 항목은 먼저 나온 것만 남긴다', () => {
+    expect(parseHistory(['a', 'b', 'a'])).toEqual(['a', 'b']);
+  });
+
+  it(`최대 ${MAX_HISTORY}개까지만 남긴다`, () => {
+    const many = Array.from({ length: MAX_HISTORY + 5 }, (_, i) => `p${i}`);
+    expect(parseHistory(many)).toEqual(many.slice(0, MAX_HISTORY));
   });
 });
 

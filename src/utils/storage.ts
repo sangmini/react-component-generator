@@ -21,12 +21,23 @@ export function readJSON(key: string): unknown {
   }
 }
 
-/** localStorage에 JSON을 쓴다. 용량 초과 등으로 실패해도 앱 동작을 막지 않는다. */
-export function writeJSON(key: string, value: unknown): void {
+/** localStorage에 JSON을 쓴다. 용량 초과 등으로 실패하면 false (앱 동작은 막지 않는다). */
+export function writeJSON(key: string, value: unknown): boolean {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    return true;
   } catch {
-    // 저장 실패는 무시한다 (영속화는 부가 기능).
+    return false;
+  }
+}
+
+/**
+ * 최신순 목록을 저장한다. 용량이 부족하면 오래된(뒤쪽) 항목부터 버리며 다시 시도한다.
+ * 메모리의 목록은 건드리지 않고, 저장되는 분량만 줄인다.
+ */
+export function writeTrimmedList(key: string, items: unknown[]): void {
+  for (let count = items.length; count >= 0; count--) {
+    if (writeJSON(key, items.slice(0, count))) return;
   }
 }
 
@@ -40,7 +51,8 @@ export function parseApiKey(value: unknown): string {
 
 export function parseHistory(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value.filter((item): item is string => typeof item === 'string');
+  const strings = value.filter((item): item is string => typeof item === 'string');
+  return [...new Set(strings)].slice(0, MAX_HISTORY);
 }
 
 /** 새 프롬프트를 맨 앞에 두고, 중복은 제거하며, 최대 개수를 유지한다. */

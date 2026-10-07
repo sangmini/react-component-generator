@@ -6,11 +6,14 @@ import { readJSON, writeJSON } from '../utils/storage';
 export function usePersistedState<T>(
   key: string,
   parse: (value: unknown) => T,
+  write: (key: string, value: T) => unknown = writeJSON,
 ): [T, Dispatch<SetStateAction<T>>] {
   const [state, setState] = useState<T>(() => parse(readJSON(key)));
 
   useEffect(() => {
-    writeJSON(key, state);
+    write(key, state);
+    // write는 호출부에서 고정된 함수를 넘기므로 의존성에서 제외한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, state]);
 
   return [state, setState];
